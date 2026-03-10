@@ -1,0 +1,1 @@
+{"version":3,"file":"remove_context.d.ts","sourceRoot":"","sources":["../../src/tools/remove_context.ts"],"names":[],"mappings":"AAEA,MAAM,WAAW,iBAAiB;IAChC,EAAE,CAAC,EAAE,MAAM,CAAC;IACZ,GAAG,CAAC,EAAE,OAAO,CAAC;IACd,OAAO,CAAC,EAAE,OAAO,CAAC;CACnB;AAED,eAAO,MAAM,mBAAmB;;;;;;;;;;;;;;;;;;;;CAoB/B,CAAC;AAEF,wBAAgB,aAAa,CAAC,IAAI,EAAE,iBAAiB,GAAG,MAAM,CAqB7D"}

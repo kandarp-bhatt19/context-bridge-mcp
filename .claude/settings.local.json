@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(cd \"/c/kandarp.bhatt/MCPs/context-bridge-mcp\" && npm install 2>&1)",
+      "Bash(cd \"/c/kandarp.bhatt/MCPs/context-bridge-mcp\" && npm run build 2>&1)",
+      "mcp__context-bridge__list_contexts",
+      "Bash(npm run:*)"
+    ]
+  }
+}
