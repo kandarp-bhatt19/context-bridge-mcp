@@ -51,7 +51,7 @@ One local MCP server. One SQLite database. All three tools read and write to the
 ### 1. Clone and build
 
 ```bash
-git clone https://github.com/your-username/context-bridge-mcp.git
+git clone https://github.com/kandarp-bhatt19/context-bridge-mcp.git
 cd context-bridge-mcp
 npm install
 npm run build
