@@ -8,6 +8,7 @@ const load_context_1 = require("./tools/load_context");
 const list_contexts_1 = require("./tools/list_contexts");
 const remove_context_1 = require("./tools/remove_context");
 const export_contexts_1 = require("./tools/export_contexts");
+const import_contexts_1 = require("./tools/import_contexts");
 const server = new index_js_1.Server({ name: 'context-bridge-mcp', version: '1.0.0' }, { capabilities: { tools: {} } });
 server.setRequestHandler(types_js_1.ListToolsRequestSchema, async () => ({
     tools: [
@@ -51,6 +52,14 @@ server.setRequestHandler(types_js_1.ListToolsRequestSchema, async () => ({
                 idempotentHint: false,
             },
         },
+        {
+            ...import_contexts_1.importContextsSchema,
+            annotations: {
+                readOnlyHint: false,
+                destructiveHint: false,
+                idempotentHint: true,
+            },
+        },
     ],
 }));
 server.setRequestHandler(types_js_1.CallToolRequestSchema, async (request) => {
@@ -83,6 +92,12 @@ server.setRequestHandler(types_js_1.CallToolRequestSchema, async (request) => {
             }
             case 'export_contexts': {
                 const result = (0, export_contexts_1.exportContexts)(args);
+                return {
+                    content: [{ type: 'text', text: result }],
+                };
+            }
+            case 'import_contexts': {
+                const result = (0, import_contexts_1.importContexts)(args);
                 return {
                     content: [{ type: 'text', text: result }],
                 };
