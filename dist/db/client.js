@@ -43,6 +43,8 @@ exports.findByTag = findByTag;
 exports.findLatest = findLatest;
 exports.deleteById = deleteById;
 exports.deleteAll = deleteAll;
+exports.findByIds = findByIds;
+exports.listAllContexts = listAllContexts;
 exports.listContexts = listContexts;
 const better_sqlite3_1 = __importDefault(require("better-sqlite3"));
 const fs = __importStar(require("fs"));
@@ -101,6 +103,17 @@ function deleteById(id) {
 function deleteAll() {
     const result = db.prepare('DELETE FROM contexts').run();
     return { count: result.changes };
+}
+function findByIds(ids) {
+    if (ids.length === 0)
+        return [];
+    const placeholders = ids.map(() => '?').join(', ');
+    const rows = db.prepare(`SELECT * FROM contexts WHERE id IN (${placeholders}) ORDER BY created_at DESC`).all(ids);
+    return rows.map(deserialize);
+}
+function listAllContexts() {
+    const rows = db.prepare('SELECT * FROM contexts ORDER BY created_at DESC').all();
+    return rows.map(deserialize);
 }
 function listContexts(opts) {
     const { tag, source_tool, limit = 20 } = opts;

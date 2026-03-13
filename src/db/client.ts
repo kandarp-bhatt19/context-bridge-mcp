@@ -109,6 +109,20 @@ export function deleteAll(): { count: number } {
   return { count: result.changes };
 }
 
+export function findByIds(ids: string[]): ContextRecord[] {
+  if (ids.length === 0) return [];
+  const placeholders = ids.map(() => '?').join(', ');
+  const rows = db.prepare(
+    `SELECT * FROM contexts WHERE id IN (${placeholders}) ORDER BY created_at DESC`
+  ).all(ids) as RawRow[];
+  return rows.map(deserialize);
+}
+
+export function listAllContexts(): ContextRecord[] {
+  const rows = db.prepare('SELECT * FROM contexts ORDER BY created_at DESC').all() as RawRow[];
+  return rows.map(deserialize);
+}
+
 export function listContexts(opts: {
   tag?: string;
   source_tool?: string;

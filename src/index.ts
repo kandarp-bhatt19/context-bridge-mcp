@@ -9,6 +9,7 @@ import { saveContext, saveContextSchema } from './tools/save_context';
 import { loadContext, loadContextSchema } from './tools/load_context';
 import { listContextsTool, listContextsSchema } from './tools/list_contexts';
 import { removeContext, removeContextSchema } from './tools/remove_context';
+import { exportContexts, exportContextsSchema } from './tools/export_contexts';
 
 const server = new Server(
   { name: 'context-bridge-mcp', version: '1.0.0' },
@@ -49,6 +50,14 @@ server.setRequestHandler(ListToolsRequestSchema, async () => ({
         idempotentHint: false,
       },
     },
+    {
+      ...exportContextsSchema,
+      annotations: {
+        readOnlyHint: true,
+        destructiveHint: false,
+        idempotentHint: false,
+      },
+    },
   ],
 }));
 
@@ -80,6 +89,13 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
 
       case 'remove_context': {
         const result = removeContext(args as unknown as Parameters<typeof removeContext>[0]);
+        return {
+          content: [{ type: 'text', text: result }],
+        };
+      }
+
+      case 'export_contexts': {
+        const result = exportContexts(args as unknown as Parameters<typeof exportContexts>[0]);
         return {
           content: [{ type: 'text', text: result }],
         };

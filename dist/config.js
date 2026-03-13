@@ -39,6 +39,7 @@ const path = __importStar(require("path"));
 exports.config = {
     dbDir: path.join(os.homedir(), '.context-bridge'),
     dbPath: path.join(os.homedir(), '.context-bridge', 'contexts.db'),
+    exportDir: path.join(os.homedir(), '.context-bridge', 'exports'),
     messageCount: 10,
     defaultUsername: 'kandarp',
 };

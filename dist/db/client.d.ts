@@ -31,6 +31,8 @@ export declare function deleteById(id: string): {
 export declare function deleteAll(): {
     count: number;
 };
+export declare function findByIds(ids: string[]): ContextRecord[];
+export declare function listAllContexts(): ContextRecord[];
 export declare function listContexts(opts: {
     tag?: string;
     source_tool?: string;
