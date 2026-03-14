@@ -1,6 +1,6 @@
 # context-bridge-mcp
 
-A local MCP server that bridges Claude session context across Claude Chat, Code, and Cowork. Save structured facts, decisions, and message history to SQLite with one command. Restore full context in any Claude tool instantly. Built with TypeScript.
+A local MCP server that bridges Claude session context across Claude Chat, Code, and Cowork. Save structured facts, decisions, and message history to SQLite with one command. Restore full context in any Claude tool instantly. Export and import as JSON. Built with TypeScript.
 
 ---
 
@@ -8,7 +8,7 @@ A local MCP server that bridges Claude session context across Claude Chat, Code,
 
 Claude Chat, Claude Code, and Claude Cowork each have their own memory. Switch between them and your context is gone — you're back to re-explaining your task, your decisions, your current state. Every time.
 
-**context-bridge-mcp** solves this with two commands: one to save, one to restore.
+**context-bridge-mcp** solves this with two commands: one to save, one to restore. And now with Phase 2 — export your context as JSON, share it, and import it anywhere.
 
 ---
 
@@ -21,10 +21,13 @@ Claude Cowork ─┘                          │
                                           │
 Claude Chat  ──┐                          │
 Claude Code  ──┼──► load_context ◄────────┘
-Claude Cowork ─┘
+Claude Cowork ─┘                          │
+                                          │
+                         export_contexts ─┼──► context.json (by ID or all)
+                         import_contexts ◄┘◄── context.json
 ```
 
-One local MCP server. One SQLite database. All three tools read and write to the same store.
+One local MCP server. One SQLite database. All three tools read and write to the same store. Export and import as JSON for portability and team sharing.
 
 ---
 
@@ -36,6 +39,8 @@ One local MCP server. One SQLite database. All three tools read and write to the
 - **Browse your history** — list all saved contexts with filters
 - **Remove contexts** — delete a specific context by UUID or wipe all at once
 - **Append-only by default** — no accidental overwrites, full history preserved
+- **Export to JSON** — export a single context by ID, or export everything at once *(Phase 2)*
+- **Import from JSON** — import contexts from a JSON file; merges safely, never overwrites existing records *(Phase 2)*
 - **Works across all Claude tools** — Chat (natural language), Code and Cowork (direct tool calls)
 
 ---
@@ -190,6 +195,104 @@ remove all contexts
 
 ---
 
+### `export_contexts` *(Phase 2)*
+
+Exports one or all saved contexts to a JSON file.
+
+**Two modes:**
+
+| Mode | Description |
+|---|---|
+| By ID | Exports a single context record by its exact UUID |
+| Export all | Exports every context in the store |
+
+**Inputs:**
+
+| Field | Type | Description |
+|---|---|---|
+| `id` | string? | UUID of the context to export. Omit to export all. |
+| `outputPath` | string? | File path for the output JSON. Defaults to `./context-export.json` |
+
+**Output format:**
+
+```json
+[
+  {
+    "id": "a1b2c3d4-...",
+    "title": "Auth Flow Refactor",
+    "username": "kandarp",
+    "source_tool": "code",
+    "tags": ["auth", "jwt", "redis"],
+    "facts": {
+      "current_task": "Refactoring JWT auth middleware...",
+      "key_decisions": ["Use Redis for token blacklist"],
+      "open_questions": ["Single-use or sliding refresh tokens?"],
+      "entities": ["AuthMiddleware", "TokenService", "RedisClient"]
+    },
+    "last_messages": [
+      { "role": "user", "content": "Let's move the token validation..." },
+      { "role": "assistant", "content": "Good call. We can extract it..." }
+    ],
+    "created_at": "2026-03-10T14:32:00.000Z",
+    "updated_at": "2026-03-10T14:32:00.000Z"
+  }
+]
+```
+
+**Examples:**
+
+```
+# Export a single context by ID
+export context a1b2c3d4-...
+
+# Export all contexts
+export all contexts
+
+# Export all to a specific path
+export all contexts to /tmp/team-contexts.json
+```
+
+---
+
+### `import_contexts` *(Phase 2)*
+
+Imports contexts from a JSON file into the local SQLite store.
+
+**Behaviour:**
+- Reads a JSON file produced by `export_contexts`
+- Merges imported records into the existing store
+- **Never overwrites** — if a context with the same `id` already exists, it is skipped
+- Returns a summary of how many records were imported vs skipped
+
+**Inputs:**
+
+| Field | Type | Description |
+|---|---|---|
+| `inputPath` | string | Path to the JSON file to import |
+
+**Examples:**
+
+```
+# Import from a file
+import contexts from /tmp/team-contexts.json
+
+# Import contexts shared by a teammate
+import_contexts inputPath "/Users/kandarp/Downloads/sprint-contexts.json"
+```
+
+**Example output:**
+
+```
+✅ Import complete
+  Imported: 3 contexts
+  Skipped:  1 (already exists)
+  Total in file: 4
+```
+
+> ℹ️ Import is always safe. Existing contexts are never modified or deleted.
+
+---
+
 ## Usage Examples
 
 ### Claude Chat (natural language)
@@ -210,6 +313,14 @@ remove all contexts
 # Remove
 "remove context a1b2c3d4"
 "remove all my saved contexts"
+
+# Export (Phase 2)
+"export context a1b2c3d4"
+"export all my contexts"
+"export all contexts to /tmp/team-contexts.json"
+
+# Import (Phase 2)
+"import contexts from /tmp/team-contexts.json"
 ```
 
 ### Claude Code / Cowork (direct tool calls)
@@ -236,11 +347,25 @@ remove_context id "a1b2c3d4-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
 
 # Remove all
 remove_context all
+
+# Export one by ID (Phase 2)
+export_contexts id "a1b2c3d4-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+
+# Export all (Phase 2)
+export_contexts
+
+# Export all to a specific path (Phase 2)
+export_contexts outputPath "/tmp/team-contexts.json"
+
+# Import from file (Phase 2)
+import_contexts inputPath "/tmp/team-contexts.json"
 ```
 
 ---
 
 ## Typical Workflow
+
+### Single developer — switching tools
 
 **Scenario:** You're deep in a Claude Code session refactoring your auth service. You need to switch to Claude Chat for a quick design discussion, then come back to Code.
 
@@ -258,6 +383,24 @@ save_context with title "Auth Refactor — token validation extracted"
 # 4. Back in Claude Code — restore the updated context
 load_context title "Auth Refactor — post design"
 # Full context restored, carry on
+```
+
+### Team sharing — passing context to a teammate *(Phase 2)*
+
+**Scenario:** You've done the architecture investigation. A teammate needs to pick up from exactly where you are.
+
+```bash
+# 1. Export your current context
+export_contexts outputPath "./auth-refactor-handoff.json"
+
+# 2. Share the file (Slack, email, drop in the repo — any way you like)
+
+# 3. Teammate imports on their machine
+import_contexts inputPath "./auth-refactor-handoff.json"
+
+# 4. Teammate loads it in their Claude tool of choice
+load_context title "Auth Refactor"
+# Full context announced — decisions, open questions, message history intact
 ```
 
 ---
@@ -305,9 +448,9 @@ export const config = {
 
 | Phase | Status | Features |
 |---|---|---|
-| **Phase 1** | ✅ Current | SQLite, 4 tools, auto extraction, announce on load |
-| **Phase 2** | Planned | JSON export/import, CLAUDE.md write-back for Code/Cowork |
-| **Phase 3** | Planned | Supabase/Postgres adapter, multi-device, team sharing |
+| **Phase 1** | ✅ Done | SQLite, 4 tools (`save`, `load`, `list`, `remove`), auto extraction, announce on load |
+| **Phase 2** | ✅ Done | JSON export by ID or all (`export_contexts`), JSON import with merge (`import_contexts`) |
+| **Phase 3** | 🔜 Planned | Supabase/Postgres adapter, multi-device sync, team sharing |
 
 ---
 
@@ -329,8 +472,5 @@ The `~/.context-bridge/` directory and `contexts.db` file are auto-created on fi
 **Wrong path error**
 Always use absolute paths in the MCP config, not relative ones.
 
----
-
-## License
-
-MIT
+**Import skipping all records**
+If all records are skipped on import, the contexts already exist in your store (matched by UUID). Use `list_contexts` to verify.
